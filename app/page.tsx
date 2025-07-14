@@ -1,57 +1,59 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { GraduationCap, Users, BookOpen } from "lucide-react"
+import type React from "react";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { GraduationCap, Users, BookOpen } from "lucide-react";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [userType, setUserType] = useState("aluno")
-  const [isLoading, setIsLoading] = useState(false)
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [userType, setUserType] = useState("professor");
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
+    e.preventDefault();
+    setIsLoading(true);
 
-    // Simular autenticação
+    if (userType === "aluno") {
+      setIsLoading(false);
+      alert("Acesso negado! Usuario de professor não tem acesso a essa tela.");
+      return;
+    }
+
     if (email && password) {
       const userData = {
         email,
         userType,
-        name: userType === "aluno" ? "João Silva" : "Prof. Maria Santos",
+        name: userType === "aluno" ? "Aluno Teste" : "Prof. Teste",
         token: `token_${Date.now()}`, // Token simulado
-      }
+      };
 
       // Salvar dados do usuário
-      localStorage.setItem("user", JSON.stringify(userData))
+      localStorage.setItem("user", JSON.stringify(userData));
 
       // Simular redirecionamento para repositórios diferentes
       setTimeout(() => {
-        if (userType === "aluno") {
-          // Em produção, seria: window.location.href = 'https://alunos.escola.com'
+        if (userType === "professor") {
           alert(
-            "Redirecionando para o sistema de ALUNOS...\n\nEm produção, você seria redirecionado para:\nhttps://alunos.escola.com",
-          )
-          // Simular redirecionamento interno para demonstração
-          window.location.href = "/aluno-sistema"
-        } else {
-          // Em produção, seria: window.location.href = 'https://professores.escola.com'
-          alert(
-            "Redirecionando para o sistema de PROFESSORES...\n\nEm produção, você seria redirecionado para:\nhttps://professores.escola.com",
-          )
-          // Simular redirecionamento interno para demonstração
-          window.location.href = "/professor-sistema"
+            "Redirecionando para o sistema de Professores..."
+          );
+          window.location.href = "/professor/dashboard";
         }
-        setIsLoading(false)
-      }, 1500)
+        setIsLoading(false);
+      }, 1500);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
@@ -60,8 +62,12 @@ export default function LoginPage() {
         <div className="hidden lg:block space-y-8">
           <div className="text-center">
             <BookOpen className="w-16 h-16 mx-auto text-blue-600 mb-4" />
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">Sistema Escolar</h1>
-            <p className="text-xl text-gray-600">Plataforma integrada de ensino e aprendizagem</p>
+            <h1 className="text-4xl font-bold text-gray-900 mb-2">
+              Sistema Escolar
+            </h1>
+            <p className="text-xl text-gray-600">
+              Plataforma integrada de ensino e aprendizagem
+            </p>
           </div>
 
           <div className="space-y-6">
@@ -71,7 +77,10 @@ export default function LoginPage() {
               </div>
               <div>
                 <h3 className="font-semibold text-gray-900">Para Alunos</h3>
-                <p className="text-gray-600">Acesse suas provas, veja resultados e acompanhe seu progresso acadêmico</p>
+                <p className="text-gray-600">
+                  Acesse suas provas, veja resultados e acompanhe seu progresso
+                  acadêmico
+                </p>
               </div>
             </div>
 
@@ -80,8 +89,13 @@ export default function LoginPage() {
                 <Users className="w-6 h-6 text-green-600" />
               </div>
               <div>
-                <h3 className="font-semibold text-gray-900">Para Professores</h3>
-                <p className="text-gray-600">Crie provas, gerencie questões e acompanhe o desempenho da turma</p>
+                <h3 className="font-semibold text-gray-900">
+                  Para Professores
+                </h3>
+                <p className="text-gray-600">
+                  Crie provas, gerencie questões e acompanhe o desempenho da
+                  turma
+                </p>
               </div>
             </div>
           </div>
@@ -124,21 +138,31 @@ export default function LoginPage() {
                 <RadioGroup value={userType} onValueChange={setUserType}>
                   <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50">
                     <RadioGroupItem value="aluno" id="aluno" />
-                    <Label htmlFor="aluno" className="flex items-center space-x-2 cursor-pointer flex-1">
+                    <Label
+                      htmlFor="aluno"
+                      className="flex items-center space-x-2 cursor-pointer flex-1"
+                    >
                       <GraduationCap className="w-5 h-5 text-blue-600" />
                       <div>
                         <div className="font-medium">Aluno</div>
-                        <div className="text-sm text-gray-500">Fazer provas e ver resultados</div>
+                        <div className="text-sm text-gray-500">
+                          Fazer provas e ver resultados
+                        </div>
                       </div>
                     </Label>
                   </div>
                   <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50">
                     <RadioGroupItem value="professor" id="professor" />
-                    <Label htmlFor="professor" className="flex items-center space-x-2 cursor-pointer flex-1">
+                    <Label
+                      htmlFor="professor"
+                      className="flex items-center space-x-2 cursor-pointer flex-1"
+                    >
                       <Users className="w-5 h-5 text-green-600" />
                       <div>
                         <div className="font-medium">Professor</div>
-                        <div className="text-sm text-gray-500">Criar provas e gerenciar turmas</div>
+                        <div className="text-sm text-gray-500">
+                          Criar provas e gerenciar turmas
+                        </div>
                       </div>
                     </Label>
                   </div>
@@ -153,12 +177,14 @@ export default function LoginPage() {
             <div className="mt-6 text-center">
               <p className="text-sm text-gray-600">
                 Não tem uma conta?{" "}
-                <button className="text-blue-600 hover:underline font-medium">Solicitar acesso</button>
+                <button className="text-blue-600 hover:underline font-medium">
+                  Solicitar acesso
+                </button>
               </p>
             </div>
           </CardContent>
         </Card>
       </div>
     </div>
-  )
+  );
 }
