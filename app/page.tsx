@@ -1,7 +1,6 @@
 "use client";
 
-import type React from "react";
-import { useState } from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,44 +13,72 @@ import {
 } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { GraduationCap, Users, BookOpen } from "lucide-react";
+import useLogin from "@/lib/useLogin";
+import { useRouter } from "next/navigation";
+import { getUsuarioFromToken } from "@/lib/tokenUtils";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [userType, setUserType] = useState("professor");
+  const [userType, setUserType] = useState("aluno");
   const [isLoading, setIsLoading] = useState(false);
+
+  const { login, error } = useLogin();
+  const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    if (userType === "aluno") {
-      setIsLoading(false);
-      alert("Acesso negado! Usuario de professor não tem acesso a essa tela.");
-      return;
-    }
+    try {
+      const result = await login({ login: email, senha: password });
 
-    if (email && password) {
-      const userData = {
-        email,
-        userType,
-        name: userType === "aluno" ? "Aluno Teste" : "Prof. Teste",
-        token: `token_${Date.now()}`, // Token simulado
-      };
+      if (result && result.token) {
+        localStorage.setItem("token", result.token);
 
-      // Salvar dados do usuário
-      localStorage.setItem("user", JSON.stringify(userData));
+        // Decodifica o token para obter os dados do usuário
+        const usuarioFromToken = getUsuarioFromToken(result.token);
 
-      // Simular redirecionamento para repositórios diferentes
-      setTimeout(() => {
-        if (userType === "professor") {
-          alert(
-            "Redirecionando para o sistema de Professores..."
-          );
-          window.location.href = "/professor/dashboard";
+        console.log("Dados decodificados do token:", usuarioFromToken);
+
+        if (usuarioFromToken) {
+          // Usa os dados do token - baseado na estrutura do token
+          const userData = {
+            id: usuarioFromToken.id, // ← ID do usuário (campo "user" no token)
+            email: usuarioFromToken.email, // ← Email do campo "sub"
+            name: usuarioFromToken.name || email.split("@")[0], // Nome baseado no email
+            userType: userType,
+          };
+          localStorage.setItem("user", JSON.stringify(userData));
+
+          console.log("Dados do usuário salvos:", userData);
+        } else {
+          // Fallback se não conseguir decodificar o token
+          const userData = {
+            id: Date.now(),
+            email: email,
+            name: email.split("@")[0],
+            userType: userType,
+          };
+          localStorage.setItem("user", JSON.stringify(userData));
         }
-        setIsLoading(false);
-      }, 1500);
+
+        alert("Login realizado com sucesso!");
+
+        // Redireciona para o dashboard correto baseado no tipo de usuário
+        if (userType === "aluno") {
+          router.push("/aluno/dashboard");
+        } else if (userType === "professor") {
+          router.push("/professor/dashboard");
+        }
+      } else {
+        alert("Login falhou. Verifique suas credenciais.");
+      }
+    } catch (err) {
+      console.error("Erro no login:", err);
+      alert("Erro ao fazer login.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -110,11 +137,11 @@ export default function LoginPage() {
           <CardContent>
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">Login</Label>
                 <Input
                   id="email"
-                  type="email"
-                  placeholder="seu@email.com"
+                  type="text"
+                  placeholder="Seu login"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -172,12 +199,24 @@ export default function LoginPage() {
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? "Entrando..." : "Entrar"}
               </Button>
+
+              {error && (
+                <p className="text-sm text-red-500 text-center">{error}</p>
+              )}
             </form>
 
             <div className="mt-6 text-center">
               <p className="text-sm text-gray-600">
                 Não tem uma conta?{" "}
-                <button className="text-blue-600 hover:underline font-medium">
+                <button
+                  type="button"
+                  className="text-blue-600 hover:underline font-medium"
+                  onClick={() =>
+                    alert(
+                      "Entre em contato com a administração para solicitar acesso."
+                    )
+                  }
+                >
                   Solicitar acesso
                 </button>
               </p>

@@ -1,71 +1,86 @@
-import { useState, useEffect } from "react"
-import axiosInstance from "./axiosInstance"  // ajuste o caminho conforme seu projeto
+// lib/useGetProva.ts
+import { useState, useEffect } from "react";
+import axiosInstance from "./axiosInstance";
 
 interface Professor {
-  id: number
-  nome: string
-  email: string
-  cpf: string
-  matriculaGeral: string
-  disciplinas: string[]
+  id: number;
+  nome: string;
+  email: string;
+  cpf: string;
+  matriculaGeral: string;
+  disciplinas: string[];
 }
 
 interface Disciplina {
-  id: number
-  nome: string
-  professor: Professor
+  id: number;
+  nome: string;
+  professor: Professor;
 }
 
 interface Questao {
-  id: number
-  descricao: string
-  alternativaCorreta: string
-  alternativaA: string
-  alternativaB: string
-  alternativaC: string
-  alternativaD: string
-  alternativaE: string
+  id: number;
+  descricao: string;
+  alternativaCorreta: string;
+  alternativaA: string;
+  alternativaB: string;
+  alternativaC: string;
+  alternativaD: string;
+  alternativaE: string;
 }
 
 interface Resultado {
-  idAluno: number
-  idQuestao: number
-  resposta: string
-  acertou: boolean
+  idAluno: number;
+  idQuestao: number;
+  resposta: string;
+  acertou: boolean;
 }
 
 export interface Prova {
-  id: number
-  disciplina: Disciplina
-  titulo: string
-  descricao: string
-  data: string
-  totalQuestoes: number
-  questoes: Questao[]
-  resultados: Resultado[]
+  id: number;
+  disciplina: Disciplina;
+  titulo: string;
+  descricao: string;
+  data: string;
+  totalQuestoes: number;
+  questoes: Questao[];
+  resultados: Resultado[];
+  ativa?: boolean;
 }
 
-export function useProva(idProva: number | string) {
-  const [prova, setProva] = useState<Prova | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+export function useGetProva(idProva: number | string | null) {
+  const [prova, setProva] = useState<Prova | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!idProva) return
+    if (!idProva) return;
 
-    setLoading(true)
-    setError(null)
+    const fetchProva = async () => {
+      setLoading(true);
+      setError(null);
 
-    axiosInstance
-      .get<Prova>(`/prova/${idProva}`)
-      .then(response => {
-        setProva(response.data)
-      })
-      .catch(err => {
-        setError(err.response?.data?.message || err.message)
-      })
-      .finally(() => setLoading(false))
-  }, [idProva])
+      try {
+        console.log("Buscando prova ID:", idProva);
+        const response = await axiosInstance.get<Prova>(`/prova/${idProva}`);
+        console.log("Prova encontrada:", response.data);
 
-  return { prova, loading, error }
+        // Garante que o campo ativa seja boolean
+        const provaData = {
+          ...response.data,
+          ativa: Boolean(response.data.ativa),
+        };
+
+        setProva(provaData);
+      } catch (err: any) {
+        setError(err.response?.data?.message || "Erro ao carregar prova");
+        console.error("Erro ao buscar prova:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProva();
+  }, [idProva]);
+
+  return { prova, loading, error };
 }

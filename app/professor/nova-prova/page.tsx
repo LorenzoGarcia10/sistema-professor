@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Plus, Trash2, Save } from "lucide-react";
+import { useCriarProva } from "@/lib/useNovaProva";
 
 interface Questao {
   id: string;
@@ -26,7 +27,11 @@ export default function NovaProvaPage() {
     alternativas: ["", "", "", "", ""],
     respostaCorreta: 0,
   });
+  const [disciplinaId] = useState(1); // 🔹 Ajusta para pegar a disciplina certa
+  const [data] = useState(new Date().toISOString().split("T")[0]); // pega data atual
   const router = useRouter();
+
+  const { criarProva, loading, error, success } = useCriarProva();
 
   useEffect(() => {
     const userData = localStorage.getItem("user");
@@ -70,31 +75,46 @@ export default function NovaProvaPage() {
     setQuestoes(questoes.filter((q) => q.id !== id));
   };
 
-  const salvarProva = () => {
+  const salvarProva = async () => {
     if (!titulo.trim() || !descricao.trim() || questoes.length === 0) {
       alert("Preencha todos os campos e adicione pelo menos uma questão");
       return;
     }
 
+    // 🔹 Mapeando as questões para o formato que o backend espera
+    const questoesFormatadas = questoes.map((q) => ({
+      descricao: q.pergunta,
+      alternativaCorreta: String.fromCharCode(65 + q.respostaCorreta),
+      alternativaA: q.alternativas[0],
+      alternativaB: q.alternativas[1],
+      alternativaC: q.alternativas[2],
+      alternativaD: q.alternativas[3],
+      alternativaE: q.alternativas[4],
+    }));
+
     const novaProva = {
-      id: Date.now().toString(),
+      disciplinaId,
       titulo: titulo.trim(),
       descricao: descricao.trim(),
-      questoes,
-      ativa: false,
+      data,
+      questoes: questoesFormatadas,
     };
 
-    const provas = JSON.parse(localStorage.getItem("provas") || "[]");
-    provas.push(novaProva);
-    localStorage.setItem("provas", JSON.stringify(provas));
+    const result = await criarProva(novaProva);
 
-    router.push("/professor/dashboard");
+    if (result) {
+      alert("Prova criada com sucesso!");
+      router.push("/professor/dashboard");
+    }
   };
 
+  // Atualiza uma alternativa sem mutar o estado
   const updateAlternativa = (index: number, value: string) => {
-    const novasAlternativas = [...questaoAtual.alternativas];
-    novasAlternativas[index] = value;
-    setQuestaoAtual({ ...questaoAtual, alternativas: novasAlternativas });
+    setQuestaoAtual((prev) => {
+      const alternativas = [...prev.alternativas];
+      alternativas[index] = value;
+      return { ...prev, alternativas };
+    });
   };
 
   return (
@@ -261,11 +281,15 @@ export default function NovaProvaPage() {
           )}
 
           {/* Salvar Prova */}
-          <div className="flex justify-center">
-            <Button onClick={salvarProva} size="lg">
+          <div className="flex flex-col items-center space-y-2">
+            <Button onClick={salvarProva} size="lg" disabled={loading}>
               <Save className="w-4 h-4 mr-2" />
-              Salvar Prova
+              {loading ? "Salvando..." : "Salvar Prova"}
             </Button>
+            {error && <p className="text-red-600">{error}</p>}
+            {success && (
+              <p className="text-green-600">Prova criada com sucesso!</p>
+            )}
           </div>
         </div>
       </main>
